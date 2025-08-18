@@ -7,25 +7,35 @@ import { ViewportType } from "@cornerstonejs/core/enums";
 import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader";
 import {
   addTool,
+  BrushTool,
   init as csToolsInit,
   PanTool,
+  segmentation,
   ToolGroupManager,
+  utilities,
   WindowLevelTool,
   ZoomTool,
 } from "@cornerstonejs/tools";
-import { MouseBindings } from "@cornerstonejs/tools/enums";
+import {
+  MouseBindings,
+  SegmentationRepresentations,
+} from "@cornerstonejs/tools/enums";
+// import { setSegmentIndexColor } from "@cornerstonejs/tools/segmentation/config/segmentationColor";
 import { useEffect, useRef } from "react";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
+// import { getStyle } from "@cornerstonejs/tools/segmentation/config/styleHelpers";
+// import { setGlobalStyle } from "@cornerstonejs/tools/segmentation/setGlobalStyle";
 
+const segmentationId = "MY_STACK_SEG";
 const toolGroupId = "myToolGroup";
 const renderingEngineId = "myRenderingEngine";
 // const imageId =
 //   "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
 
 const nhanMtImageId =
-  "wadouri:https://nhanmt.s3.ap-northeast-1.amazonaws.com/I0000000";
+  "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
 
 const DicomEditor = () => {
   const elementRef = useRef<HTMLDivElement | null>(null);
@@ -55,20 +65,44 @@ const DicomEditor = () => {
       addTool(WindowLevelTool);
       addTool(PanTool);
       addTool(ZoomTool);
+      addTool(BrushTool);
+
+      await segmentation.addSegmentations([
+        {
+          segmentationId,
+          config: {},
+          representation: {
+            type: SegmentationRepresentations.Labelmap,
+            data: {
+              imageIds: [nhanMtImageId],
+              volumeId: segmentationId,
+            },
+          },
+        },
+      ]);
 
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
       toolGroup.addTool(PanTool.toolName);
       toolGroup.addTool(ZoomTool.toolName);
+      toolGroup.addTool(BrushTool.toolName);
 
-      toolGroup.setToolActive(WindowLevelTool.toolName, {
-        bindings: [
-          {
-            mouseButton: MouseBindings.Primary, // Left Click
-          },
-        ],
+      toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
+        activeStrategy: "FILL_INSIDE_CIRCLE",
       });
+
+      toolGroup.setToolActive("CircularBrush", {
+        bindings: [{ mouseButton: MouseBindings.Primary }],
+      });
+
+      // toolGroup.setToolActive(WindowLevelTool.toolName, {
+      //   bindings: [
+      //     {
+      //       mouseButton: MouseBindings.Primary, // Left Click
+      //     },
+      //   ],
+      // });
       toolGroup.setToolActive(PanTool.toolName, {
         bindings: [
           {
@@ -95,7 +129,7 @@ const DicomEditor = () => {
         type: ViewportType.STACK,
         element: elementRef.current,
         defaultOptions: {
-          background: [0.2, 0, 0.2] as Types.Point3,
+          background: [0, 0, 0] as Types.Point3,
         },
       };
 
@@ -114,8 +148,34 @@ const DicomEditor = () => {
 
       toolGroup.addViewport(viewportId, renderingEngineId);
 
-      
       await viewportRef.current.setStack([nhanMtImageId]);
+
+      utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 5);
+      // console.log(utilities.segmentation.getBrushToolInstances(toolGroupId));
+      // const styles = annotation.config.style.getViewportToolStyles(viewportId);
+      // console.log(styles);
+
+      // Get style for a specific context
+      // const style = getStyle({
+      //   viewportId: viewportId,
+      //   segmentationId: segmentationId,
+      //   type: SegmentationRepresentations.Labelmap,
+      //   segmentIndex: 1,
+      // });
+      // console.log(style);
+
+      // setSegmentIndexColor(viewportId, segmentationId, 1, [255, 0, 0, 255]);
+
+      segmentation.addLabelmapRepresentationToViewport(viewportId, [
+        {
+          segmentationId,
+          type: SegmentationRepresentations.Labelmap,
+          config: {},
+        },
+      ]);
+
+      // segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, 1);
+
       viewportRef.current.render();
     };
 
