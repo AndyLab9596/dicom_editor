@@ -37,6 +37,8 @@ const renderingEngineId = "myRenderingEngine";
 const nhanMtImageId =
   "wadouri:https://nhanmt.s3.ap-northeast-1.amazonaws.com/I0000000";
 
+const segmentIndex = 1;
+
 const DicomEditor = () => {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const running = useRef(false);
@@ -67,22 +69,6 @@ const DicomEditor = () => {
       addTool(ZoomTool);
       addTool(BrushTool);
 
-      await segmentation.addSegmentations([
-        {
-          segmentationId,
-          config: {},
-          representation: {
-            type: SegmentationRepresentations.Labelmap,
-            data: {
-              imageIds: [nhanMtImageId],
-              // volumeId: segmentationId,
-              // referencedImageIds: [nhanMtImageId],
-              // referencedVolumeId: segmentationId
-            },
-          },
-        },
-      ]);
-
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
@@ -92,6 +78,14 @@ const DicomEditor = () => {
 
       toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
         activeStrategy: "FILL_INSIDE_CIRCLE",
+        // useCenterSegmentIndex: true,
+        // preview: {
+        //   enabled: false,
+        //   previewColors: {
+        //     0: [255, 255, 255, 128],
+        //     1: [0, 255, 255, 255],
+        //   },
+        // },
       });
 
       // toolGroup.setToolConfiguration(BrushTool.toolName, {
@@ -162,32 +156,47 @@ const DicomEditor = () => {
       await viewportRef.current.setStack([nhanMtImageId]);
 
       utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 5);
-      console.log(utilities.segmentation.getBrushToolInstances(toolGroupId));
-      // console.log(utilities.segmentation.getBrushToolInstances(toolGroupId));
-      // const styles = annotation.config.style.getViewportToolStyles(viewportId);
-      // console.log(styles);
 
-      // Get style for a specific context
-      // const style = getStyle({
-      //   viewportId: viewportId,
-      //   segmentationId: segmentationId,
-      //   type: SegmentationRepresentations.Labelmap,
-      //   segmentIndex: 1,
-      // });
-      // console.log(style);
-      setSegmentIndexColor(viewportId, segmentationId, 1, [255, 0, 0, 255]);
+      // setSegmentIndexColor(viewportId, segmentationId, 1, [0, 0, 0, 0]);
 
-      await segmentation.addLabelmapRepresentationToViewport(viewportId, [
-        {
-          segmentationId,
-          type: SegmentationRepresentations.Labelmap,
-          config: {},
-        },
-      ]);
+      // segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, 1);
 
-      segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, 1);
+      if (viewportRef.current) {
+        viewportRef.current.render();
 
-      viewportRef.current.render();
+        await segmentation.addSegmentations([
+          {
+            segmentationId,
+            config: {
+              label: segmentationId,
+              segments: {
+                0: {
+                  segmentIndex: 0,
+                  label: segmentationId,
+                  active: true,
+                  locked: false,
+                  cachedStats: {},
+                },
+              },
+            },
+            representation: {
+              type: SegmentationRepresentations.Labelmap,
+              data: {
+                imageIds: [nhanMtImageId],
+              },
+            },
+          },
+        ]);
+
+        await segmentation.addLabelmapRepresentationToViewport(viewportId, [
+          {
+            segmentationId,
+            type: SegmentationRepresentations.Labelmap,
+          },
+        ]);
+
+        segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, segmentIndex);
+      }
     };
 
     setUp();
