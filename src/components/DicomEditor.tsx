@@ -35,7 +35,7 @@ const renderingEngineId = "myRenderingEngine";
 //   "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
 
 const nhanMtImageId =
-  "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
+  "wadouri:https://nhanmt.s3.ap-northeast-1.amazonaws.com/I0000000";
 
 const DicomEditor = () => {
   const elementRef = useRef<HTMLDivElement | null>(null);
