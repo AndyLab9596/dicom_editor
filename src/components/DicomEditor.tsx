@@ -122,7 +122,7 @@ const DicomEditor = () => {
 
       toolGroup.addViewport(viewportId, renderingEngineId);
 
-      await viewportRef.current.setStack([nhanMtImageId]);
+      await viewportRef.current.setStack([nhanMtImageId], 0);
 
       viewportRef.current.render();
     };
