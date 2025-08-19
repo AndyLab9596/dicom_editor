@@ -7,7 +7,6 @@ import { ViewportType } from "@cornerstonejs/core/enums";
 import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader";
 import {
   addTool,
-  BrushTool,
   init as csToolsInit,
   PanTool,
   ToolGroupManager,
@@ -21,9 +20,11 @@ import { useEffect, useRef } from "react";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
+// import { segmentationStyle } from "@cornerstonejs/tools/segmentation";
 
 const toolGroupId = "myToolGroup";
 const renderingEngineId = "myRenderingEngine";
+// const segmentIndex = 1;
 // const imageId =
 //   "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
 
@@ -58,25 +59,30 @@ const DicomEditor = () => {
       addTool(WindowLevelTool);
       addTool(PanTool);
       addTool(ZoomTool);
+      // addTool(BrushTool);
 
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
       toolGroup.addTool(PanTool.toolName);
       toolGroup.addTool(ZoomTool.toolName);
-      toolGroup.addTool(BrushTool.toolName);
+      // toolGroup.addTool(BrushTool.toolName);
 
-      toolGroup.setToolActive("CircularBrush", {
-        bindings: [{ mouseButton: MouseBindings.Primary }],
-      });
+      // toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
+      //   activeStrategy: "FILL_INSIDE_CIRCLE",
+      // });
 
-      toolGroup.setToolActive(WindowLevelTool.toolName, {
-        bindings: [
-          {
-            mouseButton: MouseBindings.Primary, // Left Click
-          },
-        ],
-      });
+      // toolGroup.setToolActive("CircularBrush", {
+      //   bindings: [{ mouseButton: MouseBindings.Primary }],
+      // });
+
+      // toolGroup.setToolActive(WindowLevelTool.toolName, {
+      //   bindings: [
+      //     {
+      //       mouseButton: MouseBindings.Primary, // Left Click
+      //     },
+      //   ],
+      // });
       toolGroup.setToolActive(PanTool.toolName, {
         bindings: [
           {
@@ -113,10 +119,7 @@ const DicomEditor = () => {
         viewportId
       ) as Types.IStackViewport;
 
-      // Store viewport reference for zoom functions
       viewportRef.current = viewport;
-      // TODO: CLARIFY LATER
-      // BaseTool.createZoomPanMemo(viewport);
 
       setSingleViewPortStack(viewport);
 
@@ -124,6 +127,47 @@ const DicomEditor = () => {
 
       await viewportRef.current.setStack([nhanMtImageId], 0);
 
+      // const segmentationId = "mySegmentation";
+      // segmentation.addSegmentations([
+      //   {
+      //     segmentationId,
+      //     representation: {
+      //       type: SegmentationRepresentations.Labelmap,
+      //       data: {
+      //         imageIds: [viewportRef.current.getCurrentImageId()],
+      //       },
+      //     },
+      //   },
+      // ]);
+
+      // await segmentation.addSegmentationRepresentations(viewportId, [
+      //   {
+      //     segmentationId,
+      //     type: SegmentationRepresentations.Labelmap,
+      //     config: {},
+      //   },
+      // ]);
+
+      // segmentationStyle.setStyle(
+      //   {
+      //     type: SegmentationRepresentations.Labelmap,
+      //     viewportId,
+      //     segmentationId,
+      //     segmentIndex,
+      //   },
+      //   {
+      //     fillAlpha: 0.5,
+      //     fillAlphaInactive: 0.3,
+      //     outlineOpacity: 0.7,
+      //     outlineWidth: 2,
+      //     renderFill: false,
+      //   }
+      // );
+      // utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 5);
+      // segmentation.segmentIndex.setActiveSegmentIndex(
+      //   segmentationId,
+      //   segmentIndex
+      // );
       viewportRef.current.render();
     };
 
