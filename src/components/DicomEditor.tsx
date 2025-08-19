@@ -7,23 +7,27 @@ import { ViewportType } from "@cornerstonejs/core/enums";
 import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader";
 import {
   addTool,
+  annotation,
   init as csToolsInit,
+  EraserTool,
+  LabelTool,
   PanTool,
   ToolGroupManager,
   WindowLevelTool,
-  ZoomTool
+  ZoomTool,
 } from "@cornerstonejs/tools";
-import {
-  MouseBindings
-} from "@cornerstonejs/tools/enums";
+import { MouseBindings } from "@cornerstonejs/tools/enums";
 import { useEffect, useRef } from "react";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
+import CustomLabelTool from "../common/CustomLabelTool";
 // import { segmentationStyle } from "@cornerstonejs/tools/segmentation";
 
 const toolGroupId = "myToolGroup";
 const renderingEngineId = "myRenderingEngine";
+const viewportId = "CT_STACK";
+
 // const segmentIndex = 1;
 // const imageId =
 //   "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
@@ -59,13 +63,21 @@ const DicomEditor = () => {
       addTool(WindowLevelTool);
       addTool(PanTool);
       addTool(ZoomTool);
+      addTool(LabelTool);
+      addTool(EraserTool);
       // addTool(BrushTool);
+      addTool(CustomLabelTool);
 
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
       toolGroup.addTool(PanTool.toolName);
       toolGroup.addTool(ZoomTool.toolName);
+      // toolGroup.addTool(LabelTool.toolName, {
+      //   configuration: { getTextCallback },
+      // });
+      toolGroup.addTool(CustomLabelTool.toolName);
+      toolGroup.addTool(EraserTool.toolName);
       // toolGroup.addTool(BrushTool.toolName);
 
       // toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
@@ -98,12 +110,31 @@ const DicomEditor = () => {
         ],
       });
 
+      /**
+       * CUSTOM ANNOTATION
+       */
+      const myAnnotation = annotation.config.getFont({
+        viewportId,
+        toolGroupId,
+        toolName: LabelTool.toolName,
+      });
+
+      annotation.config.style.setToolGroupToolStyles(toolGroupId, {
+        global: {
+          textBoxFontSize: "20px",
+          textBoxFontFamily: "Noto Sans JP",
+          textBoxColor: "rgb(43, 0, 255)",
+          textBoxColorSelected: "rgb(255, 0, 140)",
+          textBoxColorHighlighted: "rgb(187, 0, 255)",
+        },
+      });
+      console.log(myAnnotation);
+
       // Get Cornerstone imageIds and fetch metadata into RAM
 
       // Instantiate a rendering engine
       const renderingEngine = new RenderingEngine(renderingEngineId);
       // Create a stack viewport
-      const viewportId = "CT_STACK";
       const viewportInput = {
         viewportId,
         type: ViewportType.STACK,

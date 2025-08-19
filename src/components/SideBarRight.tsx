@@ -4,18 +4,17 @@ import {
   ZoomOutOutlined,
 } from "@ant-design/icons";
 import { utilities as csUtils } from "@cornerstonejs/core";
-import { Button, Select } from "antd";
-import useDicomEditorStore from "../store/useDicomEditorStore";
-import { useEffect } from "react";
 import {
   ArrowAnnotateTool,
   EraserTool,
-  HeightTool,
   LabelTool,
-  LengthTool,
-  ToolGroupManager,
+  ToolGroupManager
 } from "@cornerstonejs/tools";
 import { MouseBindings } from "@cornerstonejs/tools/enums";
+import { Button, Select } from "antd";
+import { useEffect } from "react";
+import useDicomEditorStore from "../store/useDicomEditorStore";
+import CustomLabelTool from "../common/CustomLabelTool";
 const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 
 const toolGroupId = "myToolGroup";
@@ -215,11 +214,12 @@ const SideBarRight = () => {
           defaultValue=""
           options={[
             { value: "", label: "Select your tool" },
-            { value: LengthTool.toolName, label: "Lenght" },
-            { value: HeightTool.toolName, label: "height" },
+            // { value: LengthTool.toolName, label: "Lenght" },
+            // { value: HeightTool.toolName, label: "height" },
             { value: ArrowAnnotateTool.toolName, label: "Arrow Annotate" },
             { value: EraserTool.toolName, label: "Eraser" },
             { value: LabelTool.toolName, label: "Label" },
+            { value: CustomLabelTool.toolName, label: "Label custom" },
           ]}
           onChange={(value) => handleSelectDropdownTool(value)}
         />
