@@ -1,6 +1,6 @@
 // import DicomEditor from "./components/DicomEditor";
 import DicomEditor from "./components/DicomEditor";
-import DicomEditorWithChatGpt from "./components/DicomEditorWithChatGpt";
+// import DicomEditorWithImage from "./components/DicomEditorWithImage";
 // import DicomEditorWithCtImageIds from "./components/DicomEditorWithCtImageIds";
 import HeaderBar from "./components/HeaderBar";
 import SideBarRight from "./components/SideBarRight";
@@ -19,6 +19,8 @@ function App() {
           <DicomEditor />
           {/* <DicomEditorWithCtImageIds /> */}
           {/* <DicomEditorWithChatGpt /> */}
+          {/* <DicomEditorWithImage /> */}
+          {/* <DicomEditorUtitlitiesLoadImageToCanvs /> */}
         </div>
 
         <div className="w-[25%] bg-slate-50">

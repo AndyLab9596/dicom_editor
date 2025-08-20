@@ -17,6 +17,7 @@
     "@cornerstonejs/tools": "^3.32.10",
     "antd": "^5.27.0",
     "dicom-parser": "^1.8.21",
+    "fabric": "^6.7.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zustand": "^5.0.7"

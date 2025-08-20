@@ -8,7 +8,7 @@ import {
   ArrowAnnotateTool,
   EraserTool,
   LabelTool,
-  ToolGroupManager
+  ToolGroupManager,
 } from "@cornerstonejs/tools";
 import { MouseBindings } from "@cornerstonejs/tools/enums";
 import { Button, Select } from "antd";
@@ -24,6 +24,10 @@ const SideBarRight = () => {
 
   const zoomIn = () => {
     if (singleViewPortStack) {
+      console.log(singleViewPortStack.getViewPresentation());
+      console.log(singleViewPortStack.getProperties());
+      console.log(singleViewPortStack.getProperties());
+
       const camera = singleViewPortStack.getCamera();
       const { parallelScale } = camera;
       camera.parallelScale = parallelScale * 0.8; // Zoom in by 20%
