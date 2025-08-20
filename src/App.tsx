@@ -1,4 +1,7 @@
+// import DicomEditor from "./components/DicomEditor";
 import DicomEditor from "./components/DicomEditor";
+import DicomEditorWithChatGpt from "./components/DicomEditorWithChatGpt";
+// import DicomEditorWithCtImageIds from "./components/DicomEditorWithCtImageIds";
 import HeaderBar from "./components/HeaderBar";
 import SideBarRight from "./components/SideBarRight";
 
@@ -14,6 +17,8 @@ function App() {
       <div className="flex flex-wrap h-[680px]">
         <div className="w-[75%]  border-2 border-red-200">
           <DicomEditor />
+          {/* <DicomEditorWithCtImageIds /> */}
+          {/* <DicomEditorWithChatGpt /> */}
         </div>
 
         <div className="w-[25%] bg-slate-50">

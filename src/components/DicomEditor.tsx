@@ -1,5 +1,6 @@
 import {
   init as csRenderInit,
+  imageLoader,
   RenderingEngine,
   type Types,
 } from "@cornerstonejs/core";
@@ -8,21 +9,26 @@ import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader"
 import {
   addTool,
   annotation,
+  BrushTool,
   init as csToolsInit,
   EraserTool,
   LabelTool,
   PanTool,
+  segmentation,
   ToolGroupManager,
+  utilities,
   WindowLevelTool,
   ZoomTool,
 } from "@cornerstonejs/tools";
-import { MouseBindings } from "@cornerstonejs/tools/enums";
+import {
+  MouseBindings,
+  SegmentationRepresentations,
+} from "@cornerstonejs/tools/enums";
 import { useEffect, useRef } from "react";
+import CustomLabelTool from "../common/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
-import CustomLabelTool from "../common/CustomLabelTool";
-// import { segmentationStyle } from "@cornerstonejs/tools/segmentation";
 
 const toolGroupId = "myToolGroup";
 const renderingEngineId = "myRenderingEngine";
@@ -65,7 +71,7 @@ const DicomEditor = () => {
       addTool(ZoomTool);
       addTool(LabelTool);
       addTool(EraserTool);
-      // addTool(BrushTool);
+      addTool(BrushTool);
       addTool(CustomLabelTool);
 
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
@@ -78,15 +84,15 @@ const DicomEditor = () => {
       // });
       toolGroup.addTool(CustomLabelTool.toolName);
       toolGroup.addTool(EraserTool.toolName);
-      // toolGroup.addTool(BrushTool.toolName);
+      toolGroup.addTool(BrushTool.toolName);
 
-      // toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
-      //   activeStrategy: "FILL_INSIDE_CIRCLE",
-      // });
+      toolGroup.addToolInstance("CircularBrush", BrushTool.toolName, {
+        activeStrategy: "FILL_INSIDE_CIRCLE",
+      });
 
-      // toolGroup.setToolActive("CircularBrush", {
-      //   bindings: [{ mouseButton: MouseBindings.Primary }],
-      // });
+      toolGroup.setToolActive("CircularBrush", {
+        bindings: [{ mouseButton: MouseBindings.Primary }],
+      });
 
       // toolGroup.setToolActive(WindowLevelTool.toolName, {
       //   bindings: [
@@ -119,6 +125,8 @@ const DicomEditor = () => {
         toolName: LabelTool.toolName,
       });
 
+      console.log(myAnnotation);
+
       annotation.config.style.setToolGroupToolStyles(toolGroupId, {
         global: {
           textBoxFontSize: "20px",
@@ -128,7 +136,6 @@ const DicomEditor = () => {
           textBoxColorHighlighted: "rgb(187, 0, 255)",
         },
       });
-      console.log(myAnnotation);
 
       // Get Cornerstone imageIds and fetch metadata into RAM
 
@@ -156,49 +163,66 @@ const DicomEditor = () => {
 
       toolGroup.addViewport(viewportId, renderingEngineId);
 
-      await viewportRef.current.setStack([nhanMtImageId], 0);
+      await viewportRef.current.setStack([nhanMtImageId]);
+      // const volume = await convertStackToVolumeLabelmap({imageIds: [nhanMtImageId]});
+      // console.log(volume);
 
-      // const segmentationId = "mySegmentation";
-      // segmentation.addSegmentations([
-      //   {
-      //     segmentationId,
-      //     representation: {
-      //       type: SegmentationRepresentations.Labelmap,
-      //       data: {
-      //         imageIds: [viewportRef.current.getCurrentImageId()],
-      //       },
-      //     },
-      //   },
-      // ]);
+      const segImages = await imageLoader.createAndCacheDerivedLabelmapImages(
+        [nhanMtImageId]
+      );
 
-      // await segmentation.addSegmentationRepresentations(viewportId, [
-      //   {
-      //     segmentationId,
-      //     type: SegmentationRepresentations.Labelmap,
-      //     config: {},
-      //   },
-      // ]);
+      const segmentationId = "mySegmentation";
+      segmentation.addSegmentations([
+        {
+          segmentationId,
+          representation: {
+            type: SegmentationRepresentations.Labelmap,
+            data: {
+              imageIds: segImages.map((it => it.imageId)),
+            },
+          },
+        },
+      ]);
+
+      const segState = segmentation.state.getSegmentation(segmentationId);
+      console.log(segState);
+      const labelMap =
+        segState.representationData[SegmentationRepresentations.Labelmap];
+      console.log("labelMap", labelMap);
+
+      const currentSeg = segmentation.getActiveSegmentation(viewportId);
+      console.log(currentSeg);
+      // if (labelmap?.labelmapBuffer) {
+      //   // Fill toàn bộ buffer bằng 0 (rỗng)
+      //   labelmap.labelmapBuffer.fill(0);
+      // }
+
+      await segmentation.addSegmentationRepresentations(viewportId, [
+        {
+          segmentationId,
+          type: SegmentationRepresentations.Labelmap,
+          config: {},
+        },
+      ]);
 
       // segmentationStyle.setStyle(
       //   {
       //     type: SegmentationRepresentations.Labelmap,
       //     viewportId,
       //     segmentationId,
-      //     segmentIndex,
+      //     segmentIndex: 1,
       //   },
       //   {
-      //     fillAlpha: 0.5,
+      //     fillAlpha: 0,
       //     fillAlphaInactive: 0.3,
       //     outlineOpacity: 0.7,
       //     outlineWidth: 2,
-      //     renderFill: false,
+      //     renderFill: true,
+      //     fillAlphaAutoGenerated: 0,
       //   }
       // );
-      // utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 5);
-      // segmentation.segmentIndex.setActiveSegmentIndex(
-      //   segmentationId,
-      //   segmentIndex
-      // );
+      utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 5);
+      segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, 1);
       viewportRef.current.render();
     };
 
