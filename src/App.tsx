@@ -1,9 +1,6 @@
-// import DicomEditor from "./components/DicomEditor";
-import DicomEditor from "./components/DicomEditor";
-// import DicomEditorWithImage from "./components/DicomEditorWithImage";
-// import DicomEditorWithCtImageIds from "./components/DicomEditorWithCtImageIds";
 import HeaderBar from "./components/HeaderBar";
 import SideBarRight from "./components/SideBarRight";
+import DicomEditor from "./components/DicomEditor";
 
 function App() {
   return (
@@ -17,10 +14,6 @@ function App() {
       <div className="flex flex-wrap h-[680px]">
         <div className="w-[75%]  border-2 border-red-200">
           <DicomEditor />
-          {/* <DicomEditorWithCtImageIds /> */}
-          {/* <DicomEditorWithChatGpt /> */}
-          {/* <DicomEditorWithImage /> */}
-          {/* <DicomEditorUtitlitiesLoadImageToCanvs /> */}
         </div>
 
         <div className="w-[25%] bg-slate-50">

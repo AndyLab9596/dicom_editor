@@ -15,9 +15,12 @@
     "@cornerstonejs/dicom-image-loader": "^3.32.10",
     "@cornerstonejs/nifti-volume-loader": "^3.32.10",
     "@cornerstonejs/tools": "^3.32.10",
+    "@kitware/vtk.js": "^34.10.0",
+    "@techstark/opencv-js": "^4.11.0-release.1",
     "antd": "^5.27.0",
     "dicom-parser": "^1.8.21",
     "fabric": "^6.7.1",
+    "opencv.js": "^1.2.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zustand": "^5.0.7"
