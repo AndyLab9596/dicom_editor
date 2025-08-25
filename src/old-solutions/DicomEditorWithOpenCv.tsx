@@ -25,7 +25,7 @@ import {
   SegmentationRepresentations,
 } from "@cornerstonejs/tools/enums";
 import { useEffect, useRef, useState } from "react";
-import CustomLabelTool from "../common/CustomLabelTool";
+import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";

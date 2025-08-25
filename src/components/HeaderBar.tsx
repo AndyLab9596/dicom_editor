@@ -1,9 +1,16 @@
-import HeaderBarControllers from "./HeaderBarControllers";
+import { ToolGroupManager } from "@cornerstonejs/tools";
+import WindowLevelButton from "./WindowLevelButton";
+interface IProps {
+  selectedViewportId: string;
+}
 
-const HeaderBar = () => {
+const HeaderBar = ({ selectedViewportId }: IProps) => {
+  const toolGroup =
+    ToolGroupManager.getToolGroupForViewport(selectedViewportId);
+
   return (
-    <div className="p-2">
-      <HeaderBarControllers />
+    <div className="h-full p-2 flex items-center">
+      <WindowLevelButton toolGroup={toolGroup} />
     </div>
   );
 };

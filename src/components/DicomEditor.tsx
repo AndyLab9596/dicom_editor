@@ -9,7 +9,6 @@ import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader"
 import {
   addTool,
   annotation,
-  ArrowAnnotateTool,
   BrushTool,
   init as csToolsInit,
   EraserTool,
@@ -26,24 +25,29 @@ import {
   SegmentationRepresentations,
 } from "@cornerstonejs/tools/enums";
 import { useEffect, useRef } from "react";
-import CustomLabelTool from "../common/CustomLabelTool";
+import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
-import CustomArrowAnnotateTool from "../common/CustomArrowAnnotateTool";
+import CustomArrowAnnotateTool from "../common/customTools/CustomArrowAnnotateTool";
 
-const toolGroupId = "myToolGroup";
-const renderingEngineId = "myRenderingEngine";
-const viewportId = "CT_STACK";
+interface IProps {
+  selectedImageId: string;
+  selectedViewportId: string;
+  renderingEngineId: string;
+  selectedToolGroupId: string;
+  activeSegmentIndex: number;
+  segmentationId: string;
+}
 
-// const segmentIndex = 1;
-// const imageId =
-//   "wadouri:https://ohif-assets-new.s3.us-east-1.amazonaws.com/ACRIN-Regular/CT+CT+IMAGES/CT000009.dcm";
-
-const nhanMtImageId =
-  "wadouri:https://nhanmt.s3.ap-northeast-1.amazonaws.com/I0000000";
-
-const DicomEditor = () => {
+const DicomEditor = ({
+  selectedImageId,
+  renderingEngineId,
+  selectedToolGroupId,
+  selectedViewportId,
+  activeSegmentIndex,
+  segmentationId,
+}: IProps) => {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const running = useRef(false);
   const viewportRef = useRef<Types.IStackViewport | null>(null);
@@ -72,13 +76,12 @@ const DicomEditor = () => {
       addTool(WindowLevelTool);
       addTool(PanTool);
       addTool(ZoomTool);
-      addTool(LabelTool);
-      addTool(EraserTool);
-      addTool(BrushTool);
       addTool(CustomLabelTool);
       addTool(CustomArrowAnnotateTool);
+      addTool(EraserTool);
+      addTool(BrushTool);
 
-      const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
+      const toolGroup = ToolGroupManager.createToolGroup(selectedToolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
       toolGroup.addTool(PanTool.toolName);
@@ -91,27 +94,19 @@ const DicomEditor = () => {
         activeStrategy: "FILL_INSIDE_CIRCLE",
       });
 
+      toolGroup.addToolInstance("CircularEraser", BrushTool.toolName, {
+        activeStrategy: "ERASE_INSIDE_CIRCLE",
+      });
+
       toolGroup.addTool(CustomArrowAnnotateTool.toolName);
 
-      toolGroup.setToolActive(CustomArrowAnnotateTool.toolName, {
+      toolGroup.setToolActive(WindowLevelTool.toolName, {
         bindings: [
           {
             mouseButton: MouseBindings.Primary, // Left Click
           },
         ],
       });
-
-      // toolGroup.setToolActive("CircularBrush", {
-      //   bindings: [{ mouseButton: MouseBindings.Primary }],
-      // });
-
-      // toolGroup.setToolActive(WindowLevelTool.toolName, {
-      //   bindings: [
-      //     {
-      //       mouseButton: MouseBindings.Primary, // Left Click
-      //     },
-      //   ],
-      // });
 
       toolGroup.setToolActive(PanTool.toolName, {
         bindings: [
@@ -132,14 +127,14 @@ const DicomEditor = () => {
        * CUSTOM ANNOTATION
        */
       const myAnnotation = annotation.config.getFont({
-        viewportId,
-        toolGroupId,
+        viewportId: selectedViewportId,
+        toolGroupId: selectedToolGroupId,
         toolName: LabelTool.toolName,
       });
 
       console.log(myAnnotation);
 
-      annotation.config.style.setToolGroupToolStyles(toolGroupId, {
+      annotation.config.style.setToolGroupToolStyles(selectedToolGroupId, {
         global: {
           textBoxFontSize: "20px",
           textBoxFontFamily: "Noto Sans JP",
@@ -155,7 +150,7 @@ const DicomEditor = () => {
       const renderingEngine = new RenderingEngine(renderingEngineId);
       // Create a stack viewport
       const viewportInput = {
-        viewportId,
+        viewportId: selectedViewportId,
         type: ViewportType.STACK,
         element: elementRef.current,
         defaultOptions: {
@@ -166,24 +161,23 @@ const DicomEditor = () => {
       renderingEngine.enableElement(viewportInput);
 
       const viewport = renderingEngine.getViewport(
-        viewportId
+        selectedViewportId
       ) as Types.IStackViewport;
 
       viewportRef.current = viewport;
 
       setSingleViewPortStack(viewport);
 
-      toolGroup.addViewport(viewportId, renderingEngineId);
+      toolGroup.addViewport(selectedViewportId, renderingEngineId);
 
-      await viewportRef.current.setStack([nhanMtImageId]);
+      await viewportRef.current.setStack([selectedImageId]);
 
       const segImages = await imageLoader.createAndCacheDerivedLabelmapImages([
-        nhanMtImageId,
+        selectedImageId,
       ]);
 
-      utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 2);
+      utilities.segmentation.setBrushSizeForToolGroup(selectedToolGroupId, 2);
 
-      const segmentationId = "mySegmentation";
       segmentation.addSegmentations([
         {
           segmentationId,
@@ -196,12 +190,12 @@ const DicomEditor = () => {
         },
       ]);
 
-      const segState = segmentation.state.getSegmentation(segmentationId);
-      const labelMap =
-        segState.representationData[SegmentationRepresentations.Labelmap];
-      const currentSeg = segmentation.getActiveSegmentation(viewportId);
+      // const segState = segmentation.state.getSegmentation(segmentationId);
+      // const labelMap =
+      //   segState.representationData[SegmentationRepresentations.Labelmap];
+      // const currentSeg = segmentation.getActiveSegmentation(viewportId);
 
-      await segmentation.addSegmentationRepresentations(viewportId, [
+      await segmentation.addSegmentationRepresentations(selectedViewportId, [
         {
           segmentationId,
           type: SegmentationRepresentations.Labelmap,
@@ -225,7 +219,10 @@ const DicomEditor = () => {
       //     fillAlphaAutoGenerated: 0,
       //   }
       // );
-      segmentation.segmentIndex.setActiveSegmentIndex(segmentationId, 1);
+      segmentation.segmentIndex.setActiveSegmentIndex(
+        segmentationId,
+        activeSegmentIndex
+      );
       viewportRef.current.render();
     };
 
