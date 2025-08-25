@@ -132,3 +132,11 @@ export async function dicomUrlToImage(url: string): Promise<HTMLImageElement> {
   });
   return img;
 }
+
+export function extractUrlFromImageId(imageId: string): string {
+  const prefix = "wadouri:";
+  if (imageId.startsWith(prefix)) {
+    return imageId.substring(prefix.length);
+  }
+  return imageId;
+}

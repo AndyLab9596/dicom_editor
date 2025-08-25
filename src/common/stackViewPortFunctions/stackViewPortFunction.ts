@@ -1,5 +1,6 @@
 import type { StackViewport } from "@cornerstonejs/core";
 import { utilities as csUtils } from "@cornerstonejs/core";
+import { dicomUrlToDataURL } from "../../helpers/dicomToCanvas";
 
 const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 
@@ -140,4 +141,24 @@ export const undo = () => {
 
 export const redo = () => {
   DefaultHistoryMemo.redo();
+};
+
+export const exportToPng = async (url: string) => {
+  const pngUrl = await dicomUrlToDataURL(url, "image/png");
+  if (pngUrl) {
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = "dicom-image.png";
+    link.click();
+  }
+};
+
+export const exportToJpeg = async (url: string) => {
+  const jpegUrl = await dicomUrlToDataURL(url, "image/jpeg");
+  if (jpegUrl) {
+    const link = document.createElement("a");
+    link.href = jpegUrl;
+    link.download = "dicom-image.jpeg";
+    link.click();
+  }
 };

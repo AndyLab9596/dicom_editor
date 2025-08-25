@@ -15,6 +15,7 @@ import CustomArrowAnnotateTool from "../common/customTools/CustomArrowAnnotateTo
 import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import {
   applyZoom,
+  exportToJpeg,
   flipH,
   flipV,
   panDown,
@@ -28,6 +29,7 @@ import {
   rotateRight,
 } from "../common/stackViewPortFunctions/stackViewPortFunction";
 import useDicomEditorStore from "../store/useDicomEditorStore";
+import { extractUrlFromImageId } from "../helpers/dicomToCanvas";
 // const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 
 interface IProps {
@@ -40,7 +42,6 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
   const handleSelectDropdownTool = (toolName: string) => {
     if (toolName !== "") {
       const toolGroup = ToolGroupManager.getToolGroup(selectedToolGroupId);
-      console.log(toolGroup);
       const currentActive = toolGroup.getCurrentActivePrimaryToolName();
       toolGroup.setToolPassive(currentActive);
 
@@ -51,7 +52,20 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
           },
         ],
       });
-      console.log("value.toolName:::", toolName);
+    }
+  };
+
+  const handleSelectExport = (type: string) => {
+    if (type === "none") return;
+
+    if (type === "jpeg") {
+      exportToJpeg(
+        extractUrlFromImageId(singleViewPortStack.getCurrentImageId())
+      );
+    } else {
+      exportToJpeg(
+        extractUrlFromImageId(singleViewPortStack.getCurrentImageId())
+      );
     }
   };
 
@@ -145,6 +159,19 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
             { value: EraserTool.toolName, label: "Eraser tool" },
           ]}
           onChange={(value) => handleSelectDropdownTool(value)}
+          size="large"
+        />
+      </div>
+
+      <div className="flex gap-x-5 gap-y-2 flex-wrap p-1">
+        <Select
+          defaultValue="none"
+          options={[
+            { value: "none", label: "Select your export" },
+            { value: "png", label: "Export original to png" },
+            { value: "jpeg", label: "Export original to jpeg" },
+          ]}
+          onChange={(value) => handleSelectExport(value)}
           size="large"
         />
       </div>
