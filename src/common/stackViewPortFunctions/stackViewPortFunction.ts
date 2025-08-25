@@ -162,3 +162,5 @@ export const exportToJpeg = async (url: string) => {
     link.click();
   }
 };
+
+export const loadImageToCanvs = () => {}

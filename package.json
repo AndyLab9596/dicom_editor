@@ -20,6 +20,7 @@
     "antd": "^5.27.0",
     "dicom-parser": "^1.8.21",
     "fabric": "^6.7.1",
+    "html2canvas": "^1.4.1",
     "opencv.js": "^1.2.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

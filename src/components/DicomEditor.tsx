@@ -51,7 +51,11 @@ const DicomEditor = ({
   const elementRef = useRef<HTMLDivElement | null>(null);
   const running = useRef(false);
   const viewportRef = useRef<Types.IStackViewport | null>(null);
-  const { setSingleViewPortStack } = useDicomEditorStore();
+  const renderEngineRef = useRef<RenderingEngine | null>(null);
+  // const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const { setSingleViewPortStack } =
+    useDicomEditorStore();
 
   const initialize = async () => {
     await initProviders();
@@ -62,6 +66,15 @@ const DicomEditor = ({
     await csRenderInit();
     await csToolsInit();
   };
+
+  // const loadToCanvas = () => {
+  //   loadImageToCanvas({
+  //     canvas: canvasRef.current,
+  //     imageId: viewportRef.current.getCurrentImageId(),
+  //     useCPURendering: false,
+  //     renderingEngineId: renderingEngineId,
+  //   });
+  // };
 
   useEffect(() => {
     const setUp = async () => {
@@ -148,6 +161,7 @@ const DicomEditor = ({
 
       // Instantiate a rendering engine
       const renderingEngine = new RenderingEngine(renderingEngineId);
+
       // Create a stack viewport
       const viewportInput = {
         viewportId: selectedViewportId,
@@ -165,6 +179,7 @@ const DicomEditor = ({
       ) as Types.IStackViewport;
 
       viewportRef.current = viewport;
+      renderEngineRef.current = renderingEngine;
 
       setSingleViewPortStack(viewport);
 
@@ -234,11 +249,15 @@ const DicomEditor = ({
   }, []);
 
   return (
-    <div
-      className="w-full h-full"
-      ref={elementRef}
-      onContextMenu={(e) => e.preventDefault()}
-    ></div>
+    <>
+      <div
+        id="cornerstone-dicom-layer"
+        className="w-full h-full"
+        ref={elementRef}
+        onContextMenu={(e) => e.preventDefault()}
+      ></div>
+      {/* <canvas ref={canvasRef} height={500} width={400} /> */}
+    </>
   );
 };
 

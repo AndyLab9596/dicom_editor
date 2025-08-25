@@ -30,6 +30,7 @@ import {
 } from "../common/stackViewPortFunctions/stackViewPortFunction";
 import useDicomEditorStore from "../store/useDicomEditorStore";
 import { extractUrlFromImageId } from "../helpers/dicomToCanvas";
+import html2canvas from "html2canvas";
 // const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 
 interface IProps {
@@ -62,10 +63,26 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
       exportToJpeg(
         extractUrlFromImageId(singleViewPortStack.getCurrentImageId())
       );
-    } else {
+    } else if (type === "png") {
       exportToJpeg(
         extractUrlFromImageId(singleViewPortStack.getCurrentImageId())
       );
+    } else if (type === "capture") {
+      const cornerstoneLayer = document.querySelector(
+        "#cornerstone-dicom-layer"
+      ) as HTMLElement | null;
+
+      if (cornerstoneLayer) {
+        html2canvas(cornerstoneLayer).then((canvas) => {
+          const url = canvas.toDataURL("image/png"); // hoặc "image/jpeg"
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "dicom-image.png"; // khớp với MIME
+          link.click();
+        });
+      } else {
+        console.error("Viewport not found!");
+      }
     }
   };
 
@@ -170,6 +187,7 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
             { value: "none", label: "Select your export" },
             { value: "png", label: "Export original to png" },
             { value: "jpeg", label: "Export original to jpeg" },
+            { value: "capture", label: "Export with capture" },
           ]}
           onChange={(value) => handleSelectExport(value)}
           size="large"
