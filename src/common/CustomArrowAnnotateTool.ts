@@ -1,12 +1,17 @@
-import { LabelTool } from "@cornerstonejs/tools";
+import { ArrowAnnotateTool } from "@cornerstonejs/tools";
 
-export default class CustomLabelTool extends LabelTool {
+export default class CustomArrowAnnotateTool extends ArrowAnnotateTool {
   constructor(props = {}) {
     super({
       ...props,
       configuration: {
         // override getTextCallback ngay từ config
         getTextCallback: (doneChangingTextCallback) => {
+          this.getLabelFromUI().then((value) => {
+            doneChangingTextCallback(value);
+          });
+        },
+        changeTextCallback: (data, eventData, doneChangingTextCallback) => {
           this.getLabelFromUI().then((value) => {
             doneChangingTextCallback(value);
           });
@@ -85,4 +90,4 @@ export default class CustomLabelTool extends LabelTool {
     });
   }
 }
-CustomLabelTool.toolName = "CustomLabel";
+ArrowAnnotateTool.toolName = "CustomArrowAnnotateTool";

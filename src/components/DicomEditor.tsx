@@ -9,6 +9,7 @@ import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader"
 import {
   addTool,
   annotation,
+  ArrowAnnotateTool,
   BrushTool,
   init as csToolsInit,
   EraserTool,
@@ -29,6 +30,7 @@ import CustomLabelTool from "../common/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
+import CustomArrowAnnotateTool from "../common/CustomArrowAnnotateTool";
 
 const toolGroupId = "myToolGroup";
 const renderingEngineId = "myRenderingEngine";
@@ -74,15 +76,13 @@ const DicomEditor = () => {
       addTool(EraserTool);
       addTool(BrushTool);
       addTool(CustomLabelTool);
+      addTool(CustomArrowAnnotateTool);
 
       const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
       toolGroup.addTool(WindowLevelTool.toolName);
       toolGroup.addTool(PanTool.toolName);
       toolGroup.addTool(ZoomTool.toolName);
-      // toolGroup.addTool(LabelTool.toolName, {
-      //   configuration: { getTextCallback },
-      // });
       toolGroup.addTool(CustomLabelTool.toolName);
       toolGroup.addTool(EraserTool.toolName);
       toolGroup.addTool(BrushTool.toolName);
@@ -91,9 +91,19 @@ const DicomEditor = () => {
         activeStrategy: "FILL_INSIDE_CIRCLE",
       });
 
-      toolGroup.setToolActive("CircularBrush", {
-        bindings: [{ mouseButton: MouseBindings.Primary }],
+      toolGroup.addTool(CustomArrowAnnotateTool.toolName);
+
+      toolGroup.setToolActive(CustomArrowAnnotateTool.toolName, {
+        bindings: [
+          {
+            mouseButton: MouseBindings.Primary, // Left Click
+          },
+        ],
       });
+
+      // toolGroup.setToolActive("CircularBrush", {
+      //   bindings: [{ mouseButton: MouseBindings.Primary }],
+      // });
 
       // toolGroup.setToolActive(WindowLevelTool.toolName, {
       //   bindings: [
@@ -102,6 +112,7 @@ const DicomEditor = () => {
       //     },
       //   ],
       // });
+
       toolGroup.setToolActive(PanTool.toolName, {
         bindings: [
           {
@@ -166,10 +177,10 @@ const DicomEditor = () => {
 
       await viewportRef.current.setStack([nhanMtImageId]);
 
-      const segImages = await imageLoader.createAndCacheDerivedLabelmapImages(
-        [nhanMtImageId]
-      );
-      
+      const segImages = await imageLoader.createAndCacheDerivedLabelmapImages([
+        nhanMtImageId,
+      ]);
+
       utilities.segmentation.setBrushSizeForToolGroup(toolGroupId, 2);
 
       const segmentationId = "mySegmentation";
@@ -179,7 +190,7 @@ const DicomEditor = () => {
           representation: {
             type: SegmentationRepresentations.Labelmap,
             data: {
-              imageIds: segImages.map((it => it.imageId)),
+              imageIds: segImages.map((it) => it.imageId),
             },
           },
         },
@@ -189,7 +200,6 @@ const DicomEditor = () => {
       const labelMap =
         segState.representationData[SegmentationRepresentations.Labelmap];
       const currentSeg = segmentation.getActiveSegmentation(viewportId);
-
 
       await segmentation.addSegmentationRepresentations(viewportId, [
         {
