@@ -1,6 +1,6 @@
 import HeaderBar from "./components/HeaderBar";
 import SideBarRight from "./components/SideBarRight";
-import DicomEditor from "./components/DicomEditor";
+import DicomEditor from "./components/DicomEditorCopy";
 import useDicomEditorStore from "./store/useDicomEditorStore";
 
 function App() {
