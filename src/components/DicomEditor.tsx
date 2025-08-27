@@ -31,7 +31,7 @@ import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
-import type { Point3 } from "@cornerstonejs/core/types";
+import type { Point3, ViewportInputOptions } from "@cornerstonejs/core/types";
 
 interface IProps {
   selectedImageId: string;
@@ -219,6 +219,16 @@ const DicomEditor = ({
         element: elementRef.current,
         defaultOptions: {
           background: [0, 0, 0] as Types.Point3,
+          displayArea: {
+            type: 'FIT' as ViewportInputOptions['displayArea']['type'],
+            scale: 1,
+            storeAsInitialCamera: true,
+            imageArea: [0.1, 1] as ViewportInputOptions['displayArea']['imageArea'],
+            imageCanvasPoint: {
+              imagePoint: [0.5, 0.5] as ViewportInputOptions['displayArea']['imageCanvasPoint']['imagePoint'],
+              canvasPoint: [0.5, 0.5] as ViewportInputOptions['displayArea']['imageCanvasPoint']['imagePoint'],
+            },
+          },
         },
       };
 
