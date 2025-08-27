@@ -1,18 +1,19 @@
 import {
   init as csRenderInit,
+  Enums,
   imageLoader,
   RenderingEngine,
+  StackViewport,
   type Types,
 } from "@cornerstonejs/core";
 import { ViewportType } from "@cornerstonejs/core/enums";
+import { loadImageToCanvas } from "@cornerstonejs/core/utilities";
 import { init as dicomImageLoaderInit } from "@cornerstonejs/dicom-image-loader";
 import {
   addTool,
-  annotation,
   BrushTool,
   init as csToolsInit,
   EraserTool,
-  LabelTool,
   PanTool,
   segmentation,
   ToolGroupManager,
@@ -25,11 +26,12 @@ import {
   SegmentationRepresentations,
 } from "@cornerstonejs/tools/enums";
 import { useEffect, useRef } from "react";
+import CustomArrowAnnotateTool from "../common/customTools/CustomArrowAnnotateTool";
 import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import initProviders from "../helpers/initProviders";
 import initVolumeLoader from "../helpers/initVolumeLoader";
 import useDicomEditorStore from "../store/useDicomEditorStore";
-import CustomArrowAnnotateTool from "../common/customTools/CustomArrowAnnotateTool";
+import type { Point3 } from "@cornerstonejs/core/types";
 
 interface IProps {
   selectedImageId: string;
@@ -52,6 +54,12 @@ const DicomEditor = ({
   const running = useRef(false);
   const viewportRef = useRef<Types.IStackViewport | null>(null);
   const renderEngineRef = useRef<RenderingEngine | null>(null);
+  const navRef = useRef<HTMLCanvasElement>(null);
+
+  // canvas nền lưu ảnh gốc, không render trực tiếp ra UI
+  const bgCanvasRef = useRef<HTMLCanvasElement>(
+    document.createElement("canvas")
+  );
 
   const { setSingleViewPortStack } = useDicomEditorStore();
 
@@ -63,6 +71,94 @@ const DicomEditor = ({
     await initVolumeLoader();
     await csRenderInit();
     await csToolsInit();
+  };
+
+  function worldToImageCoordsFake(
+    world: [number, number, number],
+    spacing: Point3
+  ) {
+    const [xSpacing, ySpacing] = spacing;
+    const col = world[0] / xSpacing;
+    const row = world[1] / ySpacing;
+    return [row, col];
+  }
+
+  // Thay toàn bộ hàm updateNavigatorRectangle bằng bản này
+  const updateNavigatorRectangle = (stackViewport: StackViewport) => {
+    if (!navRef.current) return;
+    const ctx = navRef.current.getContext("2d");
+    if (!ctx) return;
+
+    const navCanvas = navRef.current;
+
+    // 1) Vẽ lại thumbnail từ hidden bgCanvas
+    ctx.clearRect(0, 0, navCanvas.width, navCanvas.height);
+    ctx.drawImage(bgCanvasRef.current, 0, 0, navCanvas.width, navCanvas.height);
+
+    // 2) Lấy kích thước ảnh gốc (pixel) để tính scale sang navigator
+    const imageData = stackViewport.getImageData();
+    if (!imageData) return;
+
+    const [imgWidth, imgHeight] = imageData.dimensions; // [x, y]
+    const scaleX = navCanvas.width / imgWidth;
+    const scaleY = navCanvas.height / imgHeight;
+
+    // 3) Lấy bốn góc của main canvas (theo pixel canvas)
+    const mainCanvas = stackViewport.getCanvas();
+    const canvasW = mainCanvas.width;
+    const canvasH = mainCanvas.height;
+
+    const corners: Types.Point2[] = [
+      [0, 0],
+      [canvasW, 0],
+      [canvasW, canvasH],
+      [0, canvasH],
+    ];
+
+    // 4) Map: canvas → world → image(ij) → navigator(x,y)
+    const mapped: [number, number][] = [];
+    const imageId = stackViewport.getCurrentImageId();
+
+    for (const pt of corners) {
+      const world = stackViewport.canvasToWorld(pt);
+      let ij;
+      try {
+        if (imageId && world) {
+          ij = worldToImageCoordsFake(world, imageData.spacing);
+        }
+      } catch (error) {
+        console.log("worldToImageCoords:::error", error);
+      }
+
+      console.log("ij", ij);
+
+      if (!ij) continue;
+
+      const row = ij[0];
+      const col = ij[1];
+
+      const clampedCol = Math.max(0, Math.min(imgWidth, col));
+      const clampedRow = Math.max(0, Math.min(imgHeight, row));
+
+      const nx = clampedCol * scaleX;
+      const ny = clampedRow * scaleY;
+
+      mapped.push([nx, ny]);
+    }
+
+    if (mapped.length !== 4) return;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(mapped[0][0], mapped[0][1]);
+    ctx.lineTo(mapped[1][0], mapped[1][1]);
+    ctx.lineTo(mapped[2][0], mapped[2][1]);
+    ctx.lineTo(mapped[3][0], mapped[3][1]);
+    ctx.closePath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+    ctx.restore();
   };
 
   useEffect(() => {
@@ -103,53 +199,20 @@ const DicomEditor = ({
       toolGroup.addTool(CustomArrowAnnotateTool.toolName);
 
       toolGroup.setToolActive(WindowLevelTool.toolName, {
-        bindings: [
-          {
-            mouseButton: MouseBindings.Primary, // Left Click
-          },
-        ],
+        bindings: [{ mouseButton: MouseBindings.Primary }],
       });
 
       toolGroup.setToolActive(PanTool.toolName, {
-        bindings: [
-          {
-            mouseButton: MouseBindings.Auxiliary, // Middle Click
-          },
-        ],
+        bindings: [{ mouseButton: MouseBindings.Auxiliary }],
       });
+
       toolGroup.setToolActive(ZoomTool.toolName, {
-        bindings: [
-          {
-            mouseButton: MouseBindings.Secondary, // Right Click
-          },
-        ],
+        bindings: [{ mouseButton: MouseBindings.Secondary }],
       });
 
-      /**
-       * CUSTOM ANNOTATION
-       */
-      const myAnnotation = annotation.config.getFont({
-        viewportId: selectedViewportId,
-        toolGroupId: selectedToolGroupId,
-        toolName: LabelTool.toolName,
-      });
-
-      console.log(myAnnotation);
-
-      annotation.config.style.setToolGroupToolStyles(selectedToolGroupId, {
-        global: {
-          textBoxFontSize: "20px",
-          textBoxFontFamily: "Noto Sans JP",
-          textBoxColor: "rgb(43, 0, 255)",
-          textBoxColorSelected: "rgb(255, 0, 140)",
-          textBoxColorHighlighted: "rgb(187, 0, 255)",
-        },
-      });
-
-      // Instantiate a rendering engine
+      // Instantiate rendering engine
       const renderingEngine = new RenderingEngine(renderingEngineId);
 
-      // Create a stack viewport
       const viewportInput = {
         viewportId: selectedViewportId,
         type: ViewportType.STACK,
@@ -169,11 +232,11 @@ const DicomEditor = ({
       renderEngineRef.current = renderingEngine;
 
       setSingleViewPortStack(viewport);
-
       toolGroup.addViewport(selectedViewportId, renderingEngineId);
 
       await viewportRef.current.setStack([selectedImageId]);
 
+      // segmentation setup (giữ nguyên như code của bạn)
       const segImages = await imageLoader.createAndCacheDerivedLabelmapImages([
         selectedImageId,
       ]);
@@ -192,11 +255,6 @@ const DicomEditor = ({
         },
       ]);
 
-      // const segState = segmentation.state.getSegmentation(segmentationId);
-      // const labelMap =
-      //   segState.representationData[SegmentationRepresentations.Labelmap];
-      // const currentSeg = segmentation.getActiveSegmentation(viewportId);
-
       await segmentation.addSegmentationRepresentations(selectedViewportId, [
         {
           segmentationId,
@@ -205,28 +263,31 @@ const DicomEditor = ({
         },
       ]);
 
-      // segmentationStyle.setStyle(
-      //   {
-      //     type: SegmentationRepresentations.Labelmap,
-      //     viewportId,
-      //     segmentationId,
-      //     segmentIndex: 1,
-      //   },
-      //   {
-      //     fillAlpha: 0,
-      //     fillAlphaInactive: 0.3,
-      //     outlineOpacity: 0.7,
-      //     outlineWidth: 2,
-      //     renderFill: true,
-      //     fillAlphaAutoGenerated: 0,
-      //   }
-      // );
       segmentation.segmentIndex.setActiveSegmentIndex(
         segmentationId,
         activeSegmentIndex
       );
 
       viewportRef.current.render();
+
+      // Load ảnh gốc vào hidden background canvas
+      await loadImageToCanvas({
+        canvas: bgCanvasRef.current,
+        imageId: selectedImageId,
+        useCPURendering: true,
+        renderingEngineId,
+      });
+
+      // Render initial navigator
+      if (viewportRef.current.getCurrentImageId()) {
+        updateNavigatorRectangle(viewportRef.current);
+
+        // Listen camera events
+        viewportRef.current.element.addEventListener(
+          Enums.Events.CAMERA_MODIFIED,
+          () => updateNavigatorRectangle(viewportRef.current!)
+        );
+      }
     };
 
     setUp();
@@ -244,6 +305,13 @@ const DicomEditor = ({
         ref={elementRef}
         onContextMenu={(e) => e.preventDefault()}
       ></div>
+
+      <canvas
+        ref={navRef}
+        width={150}
+        height={150}
+        style={{ border: "1px solid gray" }}
+      />
     </>
   );
 };
