@@ -10,7 +10,11 @@ import {
 } from "@ant-design/icons";
 import { EraserTool, ToolGroupManager } from "@cornerstonejs/tools";
 import { MouseBindings } from "@cornerstonejs/tools/enums";
+import {
+  setSegmentIndexColor
+} from "@cornerstonejs/tools/segmentation/config/segmentationColor";
 import { Button, Select } from "antd";
+import html2canvas from "html2canvas";
 import CustomArrowAnnotateTool from "../common/customTools/CustomArrowAnnotateTool";
 import CustomLabelTool from "../common/customTools/CustomLabelTool";
 import {
@@ -28,9 +32,8 @@ import {
   rotateLeft,
   rotateRight,
 } from "../common/stackViewPortFunctions/stackViewPortFunction";
-import useDicomEditorStore from "../store/useDicomEditorStore";
 import { extractUrlFromImageId } from "../helpers/dicomToCanvas";
-import html2canvas from "html2canvas";
+import useDicomEditorStore from "../store/useDicomEditorStore";
 // const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 
 interface IProps {
@@ -38,7 +41,12 @@ interface IProps {
 }
 
 const SideBarRight = ({ selectedToolGroupId }: IProps) => {
-  const { singleViewPortStack } = useDicomEditorStore();
+  const {
+    singleViewPortStack,
+    selectedViewportId,
+    segmentationId,
+    activeSegmentIndex,
+  } = useDicomEditorStore();
 
   const handleSelectDropdownTool = (toolName: string) => {
     if (toolName !== "") {
@@ -53,6 +61,58 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
           },
         ],
       });
+    }
+  };
+
+  const handleSelectBrushWithColor = (selectedColor: string) => {
+    const toolGroup = ToolGroupManager.getToolGroup(selectedToolGroupId);
+    const currentActive = toolGroup.getCurrentActivePrimaryToolName();
+    if (currentActive === "CircularBrush") {
+      // const color = getSegmentIndexColor(
+      //   selectedViewportId,
+      //   segmentationId,
+      //   activeSegmentIndex
+      // );
+      const colors: Record<string, [number, number, number, number]> = {
+        "#FFFFFF": [255, 255, 255, 0.5],
+        "#17B26A": [23, 178, 106, 0.5],
+        "#FFE834": [255, 232, 52, 0.5],
+        "#344054": [52, 64, 84, 0.5],
+        "#F04438": [240, 68, 56, 0.5],
+        "#2E90FA": [46, 144, 250, 0.5],
+      };
+
+      // const TWO_FIVE_FIVE = 255 as unknown as ColorLUT[0];
+      // const ZERO_POINT_FIVE = 0.5 as unknown as ColorLUT[0];
+
+      // addColorLUT([
+      //   TWO_FIVE_FIVE,
+      //   TWO_FIVE_FIVE,
+      //   TWO_FIVE_FIVE,
+      //   ZERO_POINT_FIVE,
+      // ]);
+      // const b26aIndex = addColorLUT([23, 178, 106, 0.5] as unknown as ColorLUT);
+      // console.log(b26aIndex);
+
+      // setColorLUT(selectedViewportId, segmentationId, b26aIndex);
+
+      setSegmentIndexColor(
+        selectedViewportId,
+        segmentationId,
+        activeSegmentIndex,
+        colors[selectedColor]
+      );
+
+      // toolGroup.setToolConfiguration("CircularBrush", {
+      //   activeStrategy: "FILL_INSIDE_CIRCLE",
+      //   useCenterSegmentIndex: true,
+      //   preview: {
+      //     enabled: true,
+      //     previewColors: {
+      //       0: [23, 178, 106, 0.5],
+      //     },
+      //   },
+      // });
     }
   };
 
@@ -192,6 +252,22 @@ const SideBarRight = ({ selectedToolGroupId }: IProps) => {
           onChange={(value) => handleSelectExport(value)}
           size="large"
         />
+      </div>
+
+      <div>
+        {["#FFFFFF", "#17B26A", "#FFE834", "#344054", "#F04438", "#2E90FA"].map(
+          (color, index) => {
+            return (
+              <Button
+                variant="solid"
+                key={color + index}
+                onClick={() => handleSelectBrushWithColor(color)}
+              >
+                {color} {<div className={`bg-[${color}] h-3 w-3`}></div>}
+              </Button>
+            );
+          }
+        )}
       </div>
     </div>
   );
